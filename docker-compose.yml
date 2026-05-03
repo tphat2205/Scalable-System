@@ -1,0 +1,81 @@
+services:
+  mysql-master:
+    image: mysql:8.0
+    container_name: mysql-master
+    ports:
+      - "3308:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+    volumes:
+      - ./mysql/master/my.cnf:/etc/mysql/conf.d/my.cnf
+    networks:
+      - backend-network
+
+  mysql-slave:
+    image: mysql:8.0
+    container_name: mysql-slave
+    ports:
+      - "3309:3306"
+    depends_on:
+      - mysql-master
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+    volumes:
+      - ./mysql/slave/my.cnf:/etc/mysql/conf.d/my.cnf
+    networks:
+      - backend-network
+ # API Node 1
+  api-node-1:
+    build: ./api
+    container_name: api-node-1
+    depends_on:
+      - mysql-master
+      - mysql-slave
+    environment:
+      - PORT=3000
+      - NODE_ID=API_Node_1
+      - DB_USER=root
+      - DB_PASSWORD=root_password
+      - DB_MASTER_HOST=mysql-master
+      - DB_MASTER_PORT=3306
+      - DB_SLAVE_HOST=mysql-slave
+      - DB_SLAVE_PORT=3306
+    networks:
+      - backend-network
+
+  # API Node 2
+  api-node-2:
+    build: ./api
+    container_name: api-node-2
+    depends_on:
+      - mysql-master
+      - mysql-slave
+    environment:
+      - PORT=3000
+      - NODE_ID=API_Node_2
+      - DB_USER=root
+      - DB_PASSWORD=root_password
+      - DB_MASTER_HOST=mysql-master
+      - DB_MASTER_PORT=3306
+      - DB_SLAVE_HOST=mysql-slave
+      - DB_SLAVE_PORT=3306
+    networks:
+      - backend-network
+
+  # Nginx Load Balancer
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-lb
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - api-node-1
+      - api-node-2
+    networks:
+      - backend-network
+
+networks:
+  backend-network:
+    driver: bridge
