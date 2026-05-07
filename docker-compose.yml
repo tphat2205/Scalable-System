@@ -6,6 +6,7 @@ services:
       - "3308:3306"
     environment:
       MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: product_db
     volumes:
       - ./mysql/master/my.cnf:/etc/mysql/conf.d/my.cnf
     networks:
@@ -20,6 +21,7 @@ services:
       - mysql-master
     environment:
       MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: product_db
     volumes:
       - ./mysql/slave/my.cnf:/etc/mysql/conf.d/my.cnf
     networks:
